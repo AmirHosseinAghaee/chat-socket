@@ -29,6 +29,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("typing", (data) => {
-    io.emit("typing", data ? { ...data, user_id: socket.id } : {});
+    socket.broadcast.emit("typing" , data)
+    // io.emit("typing", data ? { ...data, user_id: socket.id } : {});
   });
 });
