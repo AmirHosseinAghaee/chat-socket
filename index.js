@@ -12,15 +12,36 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
 
+
+app.get("/chat", (req, res) => {
+  res.sendFile(__dirname + "/chat.html");
+});
+
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
   console.log(`listening on *:${port}`);
 });
 
+let users = [] ;
 io.on("connection", (socket) => {
-  console.log(`a user connected`);
+  // console.log(`a user connected`);
 
+  socket.on("login" , (name) => {
+    const temp = name;
+    users = users.filter(user => user.id !== temp.id );
+    users.push({
+      ...temp ,
+      socket_id : socket.id ,
+    })
+    
+    io.emit("online_user" , users)
+  })
   socket.on("disconnect", () => {
+
+    const temp_socket_id = socket.id ;
+    users = users.filter(user => user.socket_id !== temp_socket_id );
+    io.emit("online_user" , users)
+
     console.log("user disconnected");
   });
 
@@ -29,7 +50,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("typing", (data) => {
+    // send to all connection 
     socket.broadcast.emit("typing" , data)
-    // io.emit("typing", data ? { ...data, user_id: socket.id } : {});
+  
   });
 });
