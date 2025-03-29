@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <script src="assets/js/tailwind.js"></script>
+    <script src="/assets/js/tailwind.js"></script>
 </head>
 
 <body>
@@ -29,7 +29,7 @@
                         <img src="https://avatars3.githubusercontent.com/u/2763884?s=128" alt="Avatar"
                             class="h-full w-full" />
                     </div>
-                    <div class="text-sm font-semibold mt-2">Aminos Co.</div>
+                    <div id="name" class="text-sm font-semibold mt-2">Aminos Co.</div>
                     <div class="text-xs text-gray-500">Lead UI/UX Designer</div>
                     <div class="flex flex-row items-center mt-3">
                         <div class="flex flex-col justify-center h-4 w-8 bg-indigo-500 rounded-full">
@@ -177,22 +177,28 @@
         </div>
     </div>
 
-    <script src="assets/js/socket.io.min.js"></script>
+    <script src="/assets/js/socket.io.min.js"></script>
     <script>
-        const socket = io();
+        const socket = io({
+            auth: {
+                token: "1234"
+            }
+        });
 
-        let user = JSON.parse(localStorage.getItem('name')) ;
+        let user = JSON.parse(localStorage.getItem('name'));
         const name = user.name;
 
-        socket.emit('login' , user)
+        socket.emit('login', user)
 
         const formbox = document.querySelector("#form-chatbox"),
+            userName = document.querySelector("#name"),
             textbox = document.querySelector("#textbox"),
             chatList = document.querySelector("#chatList"),
-            isTyping = document.querySelector("#isTyping") ,
-            online_user_list = document.querySelector("#online_user_list") ,
+            isTyping = document.querySelector("#isTyping"),
+            online_user_list = document.querySelector("#online_user_list"),
             chatArea = document.querySelector("#chatArea")
 
+        userName.innerHTML = name;
         let timer = null;
         textbox.addEventListener('input', (e) => {
             clearTimeout(timer);
@@ -208,16 +214,20 @@
 
         formbox.addEventListener('submit', (e) => {
             e.preventDefault();
+            const path = window.location.hash;
+            // console.log(path.split("#"))
             if (textbox.value) {
                 socket.emit("chat message", {
-                    name : name,
-                    message: textbox.value
+                    name: name,
+                    message: textbox.value,
+                    to: path.split("#").length > 1 ? path.split("#")[1] : null,
                 })
                 textbox.value = "";
             }
         })
 
         socket.on("chat message", data => {
+            console.log("data ", data)
             let msg = null;
             if (socket.id === data.user_id) {
                 msg = `<div class="col-start-6 col-end-13 p-3 rounded-lg">
@@ -228,7 +238,7 @@
                                         </div>
                                         <div class="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl">
                                             <div>
-                                                ${data.message}
+                                                   ${data.message}
                                             </div>
                                             <div class="absolute text-xs bottom-0 right-0 -mb-5 mr-2 text-gray-500">
                                                 Seen
@@ -256,22 +266,22 @@
                                 </div>`;
             }
             chatList.innerHTML += msg;
-            chatArea.scrollTop = chatArea.scrollHeight - chatArea.clientHeight ;
+            chatArea.scrollTop = chatArea.scrollHeight - chatArea.clientHeight;
         })
 
-        socket.on("online_user" , data => {
+        socket.on("online_user", data => {
             console.log("this is test of message ");
-            console.log("users " , data);
+            console.log("users ", data);
             online_user_list.innerHTML = "";
             data.forEach(el => {
-                online_user_list.innerHTML += ` <button class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2">
+                online_user_list.innerHTML += ` <a href="#${el.socket_id}" class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2">
                             <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
                                 ${el.name?.[0] || "?"}
                             </div>
                             <div class="ml-2 text-sm font-semibold">${el.name}</div>
-                        </button>`
+                        </a>`
             })
-            
+
         })
 
     </script>
