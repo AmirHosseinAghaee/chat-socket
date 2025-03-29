@@ -27,13 +27,16 @@ server.listen(port, () => {
 });
 
 let users = [];
-io.use((socket, next) => {
+
+const chatNameSpace = io.of("/chat");
+chatNameSpace.use((socket, next) => {
   const token = socket.handshake.auth.token;
   const validToken = "1234";
   if (token === validToken) next();
   else console.log("token inValid");
 });
-io.on("connection", (socket) => {
+
+chatNameSpace.on("connection", (socket) => {
   // console.log(`a user connected`);
 
   socket.on("login", (name) => {
@@ -44,24 +47,24 @@ io.on("connection", (socket) => {
       socket_id: socket.id,
     });
 
-    io.emit("online_user", users);
+    chatNameSpace.emit("online_user", users);
   });
   socket.on("disconnect", () => {
     const temp_socket_id = socket.id;
     users = users.filter((user) => user.socket_id !== temp_socket_id);
-    io.emit("online_user", users);
+    chatNameSpace.emit("online_user", users);
 
     console.log("user disconnected");
   });
 
   socket.on("chat message", (msg) => {
     if (msg?.to)
-      io.to(msg.to).emit("chat message", {
+      chatNameSpace.to(msg.to).emit("chat message", {
         ...msg,
         user_id: socket.id,
         from: socket.id,
       });
-    else io.emit("chat message", { ...msg, user_id: socket.id });
+    else chatNameSpace.emit("chat message", { ...msg, user_id: socket.id });
   });
 
   socket.on("typing", (data) => {
